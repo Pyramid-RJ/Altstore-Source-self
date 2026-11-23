@@ -1,0 +1,42 @@
+{
+  "order": 10,
+  "enabled": true,
+  "repo": "ccch1mneyyy/dsh-Go",
+  "name": "DSH Go",
+  "bundleIdentifier": "io.github.ccch1mneyyy.dshgo",
+  "developerName": "ccch1mneyyy",
+  "subtitle": "DeepSeek Harness 装进口袋",
+  "localizedDescription": "DSH Go 是 DeepSeek Harness（dsh）的手机客户端：手机上本机运行，也能遥控电脑上正在跑的会话，可实时查看、操作与语音输入。源码遵循 AGPL-3.0。本源收录上游发布的未签名 iOS 构建（ipa），可通过 AltStore / SideStore 使用 Apple ID 自签安装。",
+  "iconURL": "https://raw.githubusercontent.com/ccch1mneyyy/dsh-Go/main/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
+  "tintColor": "#6D85CA",
+  "category": "developer",
+  "minOSVersion": "15.0",
+  "screenshots": {
+    "iphone": [],
+    "ipad": []
+  },
+  "privacy": {
+    "NSLocalNetworkUsageDescription": "Connects to DSH hosts you choose and, when enabled, this iPhone's local developer service for phone control.",
+    "NSCameraUsageDescription": "Takes photos to send to DSH as attachments.",
+    "NSPhotoLibraryUsageDescription": "Picks images to send to DSH as attachments.",
+    "NSPhotoLibraryAddUsageDescription": "Saves generated images to your photo library.",
+    "NSMicrophoneUsageDescription": "Used for voice input.",
+    "NSSpeechRecognitionUsageDescription": "Turns voice input into text. Where the phone can't do it by itself, the audio goes to Apple's speech service.",
+    "NSCalendarsUsageDescription": "Opens the calendar editor when you approve adding an event.",
+    "NSContactsUsageDescription": "Looks up or adds contacts when you approve a request from the on-device engine.",
+    "NSRemindersUsageDescription": "Reads or changes reminders when you approve a request from the on-device engine.",
+    "NSRemindersFullAccessUsageDescription": "Reads or changes reminders when you approve a request from the on-device engine.",
+    "NSLocationWhenInUseUsageDescription": "Reads your location for requests you approve. If you enable background location protection, location updates support active on-device tasks; the protection feature does not store or send coordinates.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "Only when you enable background location protection, uses location updates while an on-device task runs in the background. Coordinates are not stored or sent; this can increase battery use."
+  },
+  "news": true,
+  "includePrerelease": false,
+  "maxPages": 2,
+  "maxVersions": 30,
+  "assetPattern": "ios[^/]*\\.ipa$",
+  "versionStripPrefix": "v",
+  "notesFromAsset": {
+    "name": "update.json",
+    "locale": "zh"
+  }
+}

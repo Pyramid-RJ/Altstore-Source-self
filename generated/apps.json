@@ -1,15 +1,71 @@
 {
-  "name": "PiliPlus",
-  "identifier": "io.github.piliplus.altstore.source",
-  "website": "https://github.com/bggRGjQaUbCoE/PiliPlus",
-  "subtitle": "Unofficial PiliPlus AltStore source",
-  "description": "PiliPlus 是使用 Flutter 开发的 BiliBili 第三方客户端，基于 pilipala 与 PiliPalaX，支持推荐/热门/分区、番剧、直播、动态、搜索、缓存离线等完整功能。本源收录上游发布的未签名 iOS 构建（ipa），可通过 AltStore / SideStore 使用 Apple ID 自签安装。",
-  "iconURL": "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/images/logo/logo.png",
-  "tintColor": "#5CB67B",
+  "name": "Pyramid 自用源",
+  "identifier": "io.github.pyramidrj.altstore.self",
+  "website": "https://github.com/Pyramid-RJ/Altstore-Source-self",
+  "subtitle": "自用 iOS 应用集合",
+  "description": "个人的 AltStore / SideStore 源，只收录自己在用的应用。当前收录：DSH Go（DeepSeek Harness 手机客户端）、PiliPlus（BiliBili 第三方客户端）。源内为上游发布的未签名 ipa，安装时由 AltStore / SideStore 用你的 Apple ID 重签。",
+  "iconURL": "https://raw.githubusercontent.com/Pyramid-RJ/Altstore-Source-self/main/assets/source-icon.png",
+  "tintColor": "#4C6EF5",
   "featuredApps": [
+    "io.github.ccch1mneyyy.dshgo",
     "com.example.piliplus"
   ],
   "apps": [
+    {
+      "beta": false,
+      "name": "DSH Go",
+      "bundleIdentifier": "io.github.ccch1mneyyy.dshgo",
+      "developerName": "ccch1mneyyy",
+      "subtitle": "DeepSeek Harness 装进口袋",
+      "localizedDescription": "DSH Go 是 DeepSeek Harness（dsh）的手机客户端：手机上本机运行，也能遥控电脑上正在跑的会话，可实时查看、操作与语音输入。源码遵循 AGPL-3.0。本源收录上游发布的未签名 iOS 构建（ipa），可通过 AltStore / SideStore 使用 Apple ID 自签安装。",
+      "version": "1.3.0",
+      "versionDate": "2026-11-20T20:04:40Z",
+      "versionDescription": "- **顶栏一键语音通话。** 首页右上角、新对话按钮旁边多了通话按钮，新对话里也能直接打。\n- **长按就能选字。** 长按回复或自己发的消息直接选中按到的词，拖两端改范围；选区上有复制、引用、分享、朗读、全选，「更多」里是原来的消息菜单。自己发的消息也能引用了。朗读选中的文字时，里面的密码、密钥不会念出来。\n- **远程主机：对话备份和网页版。** 远程主机页可以把主机上的对话加密备份到手机，再恢复到原来的或另一台主机（每次恢复新建对话，不覆盖；附件和工作区源码不迁移）。主机支持时，还能在 App 里直接打开主机的 DSH 网页版，不用把登录凭据交给浏览器；服务繁忙时会提示「人太多了，请稍后重试」。\n- **后台保护（需要自己打开）。** 设置里新增后台运行保护，默认关闭。打开后本机长任务切到后台更不容易被系统杀掉，被系统收回时如实显示，不会假装还在运行。iOS 可以选静音音频或后台定位来保活，都要自己授权，不保存也不上传位置。\n- **酒馆。**\n  - 支持酒馆助手脚本库：全局、预设、角色卡里的脚本都能运行。预设的脚本能拿到 SillyTavern 的事件和当前预设，像小猫之神这类预设的菜单现在能出来；脚本面板在画布里显示，开关会写回预设。\n  - 大卡明显不卡了：重卡导入、卡库列表、长历史显示快了数倍，卡库占用减少约三分之二。前端卡只渲染屏幕上看得见的消息，写回复时少了很多多余重建。新增「省电渲染」开关（酒馆设置 › 显示，默认关）：关掉卡片网页里的毛玻璃，循环动画只播一遍。\n  - 上下文满了一次裁掉一截，而不是每条都裁，模型的缓存能持续命中，更快也更省钱（默认开）。\n  - 前端卡的开场白不再显示成一堆代码；深色模式下卡片颜色和网页文字看得清；酒馆界面统一了间距、样式和文案，加了克制的动效。\n- **伙伴小屋更清晰。** 小屋按屏幕本身的像素密度渲染（之前最多按 2 倍），卡顿时临时降低的清晰度流畅后会自己升回来。\n- **新桌宠「小粉鱼」。** 第三只内置宠物，带 18 种状态动画和 3 段待机小动作；切换动作时淡入淡出。\n- **分享长图。** 分享成图片时保留完整正文，生成一张长图，不再截掉后半段。\n- **本机引擎默认用 tawcroot 启动**（Android 10 及以上）：启动更快；起不来会自动退回原来的兼容启动（PRoot），不弹故障卡。之前手动关过的保持原样。卓易通上 PRoot 启动失败时，故障卡上会出现「用 tawcroot 启动」。\n- **修复。** 升级到 1.1.0 后本机新建对话失败；本机用久了会话列表超过 8 MB 就整个加载失败；配了多台 DNS 时第一台拒绝就联网失败；插件配置里 API Key 填不进去；Android 10 用 Shizuku 授权后手机操控报「身份改变」；HyperOS / Android 16 一直 60 Hz（刷新率设置现在也作用到画面本身）；APK 已下好但空间只够一份时误报空间不足；同一路径的图片被覆盖后，旧消息里显示成新图；模型列表接口返回 404 时现在会提示可以手动添加模型；模型选择里过长的名字显示不全；伙伴自动想起记忆时误把子代理配置当成对话内容；桌宠、悬浮窗菜单、伙伴小组件和网页岛的几处显示问题。\n- **验证情况。** 这一版的新功能大部分只经过自动测试和编译检查，tawcroot 默认启动、后台保护、远程备份和网页版都没有在各种真机上完整走过。iOS 安装包等 CI 编完会补到这个版本下；鸿蒙 HAP 这一版仍不提供。遇到问题请导出诊断并开 issue。",
+      "downloadURL": "https://github.com/ccch1mneyyy/dsh-Go/releases/download/v1.3.0/dsh-go-1.3.0-ios-unsigned.ipa",
+      "size": 126020561,
+      "iconURL": "https://raw.githubusercontent.com/ccch1mneyyy/dsh-Go/main/app/ios/Runner/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png",
+      "tintColor": "#6D85CA",
+      "category": "developer",
+      "screenshots": {
+        "iphone": [],
+        "ipad": []
+      },
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocalNetworkUsageDescription": "Connects to DSH hosts you choose and, when enabled, this iPhone's local developer service for phone control.",
+          "NSCameraUsageDescription": "Takes photos to send to DSH as attachments.",
+          "NSPhotoLibraryUsageDescription": "Picks images to send to DSH as attachments.",
+          "NSPhotoLibraryAddUsageDescription": "Saves generated images to your photo library.",
+          "NSMicrophoneUsageDescription": "Used for voice input.",
+          "NSSpeechRecognitionUsageDescription": "Turns voice input into text. Where the phone can't do it by itself, the audio goes to Apple's speech service.",
+          "NSCalendarsUsageDescription": "Opens the calendar editor when you approve adding an event.",
+          "NSContactsUsageDescription": "Looks up or adds contacts when you approve a request from the on-device engine.",
+          "NSRemindersUsageDescription": "Reads or changes reminders when you approve a request from the on-device engine.",
+          "NSRemindersFullAccessUsageDescription": "Reads or changes reminders when you approve a request from the on-device engine.",
+          "NSLocationWhenInUseUsageDescription": "Reads your location for requests you approve. If you enable background location protection, location updates support active on-device tasks; the protection feature does not store or send coordinates.",
+          "NSLocationAlwaysAndWhenInUseUsageDescription": "Only when you enable background location protection, uses location updates while an on-device task runs in the background. Coordinates are not stored or sent; this can increase battery use."
+        }
+      },
+      "versions": [
+        {
+          "version": "1.3.0",
+          "date": "2026-11-20T20:04:40Z",
+          "localizedDescription": "- **顶栏一键语音通话。** 首页右上角、新对话按钮旁边多了通话按钮，新对话里也能直接打。\n- **长按就能选字。** 长按回复或自己发的消息直接选中按到的词，拖两端改范围；选区上有复制、引用、分享、朗读、全选，「更多」里是原来的消息菜单。自己发的消息也能引用了。朗读选中的文字时，里面的密码、密钥不会念出来。\n- **远程主机：对话备份和网页版。** 远程主机页可以把主机上的对话加密备份到手机，再恢复到原来的或另一台主机（每次恢复新建对话，不覆盖；附件和工作区源码不迁移）。主机支持时，还能在 App 里直接打开主机的 DSH 网页版，不用把登录凭据交给浏览器；服务繁忙时会提示「人太多了，请稍后重试」。\n- **后台保护（需要自己打开）。** 设置里新增后台运行保护，默认关闭。打开后本机长任务切到后台更不容易被系统杀掉，被系统收回时如实显示，不会假装还在运行。iOS 可以选静音音频或后台定位来保活，都要自己授权，不保存也不上传位置。\n- **酒馆。**\n  - 支持酒馆助手脚本库：全局、预设、角色卡里的脚本都能运行。预设的脚本能拿到 SillyTavern 的事件和当前预设，像小猫之神这类预设的菜单现在能出来；脚本面板在画布里显示，开关会写回预设。\n  - 大卡明显不卡了：重卡导入、卡库列表、长历史显示快了数倍，卡库占用减少约三分之二。前端卡只渲染屏幕上看得见的消息，写回复时少了很多多余重建。新增「省电渲染」开关（酒馆设置 › 显示，默认关）：关掉卡片网页里的毛玻璃，循环动画只播一遍。\n  - 上下文满了一次裁掉一截，而不是每条都裁，模型的缓存能持续命中，更快也更省钱（默认开）。\n  - 前端卡的开场白不再显示成一堆代码；深色模式下卡片颜色和网页文字看得清；酒馆界面统一了间距、样式和文案，加了克制的动效。\n- **伙伴小屋更清晰。** 小屋按屏幕本身的像素密度渲染（之前最多按 2 倍），卡顿时临时降低的清晰度流畅后会自己升回来。\n- **新桌宠「小粉鱼」。** 第三只内置宠物，带 18 种状态动画和 3 段待机小动作；切换动作时淡入淡出。\n- **分享长图。** 分享成图片时保留完整正文，生成一张长图，不再截掉后半段。\n- **本机引擎默认用 tawcroot 启动**（Android 10 及以上）：启动更快；起不来会自动退回原来的兼容启动（PRoot），不弹故障卡。之前手动关过的保持原样。卓易通上 PRoot 启动失败时，故障卡上会出现「用 tawcroot 启动」。\n- **修复。** 升级到 1.1.0 后本机新建对话失败；本机用久了会话列表超过 8 MB 就整个加载失败；配了多台 DNS 时第一台拒绝就联网失败；插件配置里 API Key 填不进去；Android 10 用 Shizuku 授权后手机操控报「身份改变」；HyperOS / Android 16 一直 60 Hz（刷新率设置现在也作用到画面本身）；APK 已下好但空间只够一份时误报空间不足；同一路径的图片被覆盖后，旧消息里显示成新图；模型列表接口返回 404 时现在会提示可以手动添加模型；模型选择里过长的名字显示不全；伙伴自动想起记忆时误把子代理配置当成对话内容；桌宠、悬浮窗菜单、伙伴小组件和网页岛的几处显示问题。\n- **验证情况。** 这一版的新功能大部分只经过自动测试和编译检查，tawcroot 默认启动、后台保护、远程备份和网页版都没有在各种真机上完整走过。iOS 安装包等 CI 编完会补到这个版本下；鸿蒙 HAP 这一版仍不提供。遇到问题请导出诊断并开 issue。",
+          "downloadURL": "https://github.com/ccch1mneyyy/dsh-Go/releases/download/v1.3.0/dsh-go-1.3.0-ios-unsigned.ipa",
+          "size": 126020561,
+          "minOSVersion": "15.0"
+        },
+        {
+          "version": "1.2.0",
+          "date": "2026-11-18T07:32:51Z",
+          "localizedDescription": "- **iOS 版（测试）。** 这一版起提供未签名的 iOS 安装包 `dsh-go-1.2.0-ios-unsigned.ipa`，需要用爱思助手、AltStore 等工具自己签名后安装。用免费 Apple ID 签名时 Bundle ID 会被改掉，部分能力（如 Siri、分享扩展、后台）可能用不了。iOS 版只在少数真机上试过，问题请开 issue。\n- **鸿蒙版合入主线。** 鸿蒙版的代码已经和安卓、iOS 共用一套，这一版暂时不提供 HAP 安装包，签名就绪后再补到这个版本下。\n- **酒馆。** 酒馆助手的接口补齐，支持原生 MVU 变量；能把 DeepSeek 网页里聊不下去的对话导入酒馆接着聊；导入大卡和长聊天时明显不卡了。\n- **让 AI 做一只宠物。** 宠物页新增「让 AI 做一只宠物」：带上自己的素材（GIF、逐帧图、Aseprite 导出或单张图），AI 会把它转成宠物包；转换时保留中文动画名，网页模式也能用。\n- **按你问过的话搜索会话。** 会话搜索能搜到你自己问过的话和回复摘要，句子中间的中文词也能搜到。\n- **手机操控确认改成三档**：允许一次、本轮允许、取消；设置里可以列一份「始终允许」的 App。停止只作用于当前这一轮，下一轮自动恢复。免确认模式下截图和点击不再弹卡。\n- **长回复更流畅。** 长回复分块显示，流式输出时只重排最后一块。\n- 其他改进：选 English 时 App 写给引擎的 AGENTS.md 也用英文；伙伴包的大小上限放宽，投稿失败会说清原因；桌面小组件的默认文字跟随 App 语言；跳过的版本换了更新源后也算跳过。\n- **修复。** 安卓引擎在某些情况下重启被锁死；DeepSeek 的拒绝回复和无名错误被当成网络错误；生成图片时网关返回空链接导致图片丢失；首次 DNS 失败占用当天的生成额度；回合结束但没有答复时没有任何提示；Windows 主机的盘符路径和链接打不开、长文件名存不到手机；换启动画面或壁纸时旧文件被提前删掉；快速切换主机后最近会话停在上一个；未发出的草稿丢失；读屏无法点击详情页签和主题选项。\n- **验证情况。** iOS 版和鸿蒙版都只在 CI 里编译并跑过模拟器测试，真机只做过零星试用；安卓版的新改动大部分只经过自动测试。遇到问题请导出诊断并开 issue。",
+          "downloadURL": "https://github.com/ccch1mneyyy/dsh-Go/releases/download/v1.2.0/dsh-go-1.2.0-ios-unsigned.ipa",
+          "size": 123474162,
+          "minOSVersion": "15.0"
+        }
+      ]
+    },
     {
       "beta": false,
       "name": "PiliPlus",
@@ -591,10 +647,20 @@
   ],
   "news": [
     {
+      "appID": "io.github.ccch1mneyyy.dshgo",
+      "caption": "DSH Go 1.3.0 已发布",
+      "date": "2026-11-20T20:04:40Z",
+      "identifier": "dsh-go-1.3.0",
+      "notify": true,
+      "tintColor": "#6D85CA",
+      "title": "DSH Go 1.3.0",
+      "url": "https://github.com/ccch1mneyyy/dsh-Go/releases/tag/v1.3.0"
+    },
+    {
       "appID": "com.example.piliplus",
       "caption": "PiliPlus 2.2.1 已发布",
       "date": "2026-11-14T08:11:53Z",
-      "identifier": "release-2.2.1",
+      "identifier": "piliplus-2.2.1",
       "notify": true,
       "tintColor": "#5CB67B",
       "title": "PiliPlus 2.2.1",

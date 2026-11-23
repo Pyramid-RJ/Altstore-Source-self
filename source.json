@@ -1,0 +1,9 @@
+{
+  "name": "Pyramid 自用源",
+  "identifier": "io.github.pyramidrj.altstore.self",
+  "website": "https://github.com/Pyramid-RJ/Altstore-Source-self",
+  "subtitle": "自用 iOS 应用集合",
+  "description": "个人的 AltStore / SideStore 源，只收录自己在用的应用。当前收录：DSH Go（DeepSeek Harness 手机客户端）、PiliPlus（BiliBili 第三方客户端）。源内为上游发布的未签名 ipa，安装时由 AltStore / SideStore 用你的 Apple ID 重签。",
+  "iconURL": "https://raw.githubusercontent.com/Pyramid-RJ/Altstore-Source-self/main/assets/source-icon.png",
+  "tintColor": "#4C6EF5"
+}

@@ -1,0 +1,38 @@
+{
+  "order": 20,
+  "enabled": true,
+  "repo": "bggRGjQaUbCoE/PiliPlus",
+  "name": "PiliPlus",
+  "bundleIdentifier": "com.example.piliplus",
+  "developerName": "bggRGjQaUbCoE",
+  "subtitle": "使用 Flutter 开发的 BiliBili 第三方客户端",
+  "localizedDescription": "PiliPlus 是使用 Flutter 开发的 BiliBili 第三方客户端，基于 pilipala 与 PiliPalaX，支持推荐/热门/分区、番剧、直播、动态、搜索、缓存离线等完整功能。本源收录上游发布的未签名 iOS 构建（ipa），可通过 AltStore / SideStore 使用 Apple ID 自签安装。",
+  "iconURL": "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/images/logo/logo.png",
+  "tintColor": "#5CB67B",
+  "category": "entertainment",
+  "minOSVersion": "15.0",
+  "screenshots": {
+    "iphone": [
+      "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/screenshots/home.png",
+      "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/screenshots/bangumi.png",
+      "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/screenshots/bangumi_detail.png",
+      "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/screenshots/dynamic.png",
+      "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/screenshots/search.png",
+      "https://raw.githubusercontent.com/bggRGjQaUbCoE/PiliPlus/main/assets/screenshots/set.png"
+    ],
+    "ipad": []
+  },
+  "privacy": {
+    "NSPhotoLibraryUsageDescription": "请允许APP保存图片到相册",
+    "NSCameraUsageDescription": "App需要您的同意，才能访问相册",
+    "NSAppleMusicUsageDescription": "App需要您的同意，才能访问媒体资料库",
+    "NSLocalNetworkUsageDescription": "需要访问本地网络以发现和连接 DLNA 投屏设备"
+  },
+  "news": true,
+  "includePrerelease": false,
+  "maxPages": 2,
+  "maxVersions": 60,
+  "assetPattern": "PiliPlus[_-]ios.*\\.ipa$",
+  "versionStripPrefix": "",
+  "buildVersionRegex": "\\+(\\d+)\\.ipa$"
+}

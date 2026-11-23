@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
-"""Generate AltStore source JSON for PiliPlus from upstream GitHub releases.
+"""Generate a personal AltStore / SideStore source from GitHub releases.
 
-Reads the upstream releases API, maps every release that ships an unsigned
-iOS .ipa to an AltStore version entry, and writes:
-  - generated/apps.json  (primary source URL)
-  - alt_store.json       (equivalent copy, classic source filename)
+Inputs
+------
+source.json     source-level metadata: name, identifier, tintColor, ...
+apps/*.json     one file per app; each names the upstream GitHub repo to watch,
+                which release asset is the iOS build, and how to present it.
 
-Standard library only; runs on plain python3 (GitHub Actions ubuntu-latest
-has it preinstalled).
+Outputs
+-------
+generated/apps.json     the source document (primary URL)
+alt_store.json          identical copy under the classic filename
+
+Every config field lives in JSON so adding an app needs no code change: drop a
+file into apps/, commit, and the scheduled workflow picks it up.
+
+Standard library only -- GitHub Actions needs no dependency install step.
 """
 
 import json
@@ -17,207 +25,304 @@ import sys
 import urllib.request
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Constants (verified against the actual released ipa and the upstream repo)
-# ---------------------------------------------------------------------------
-
-UPSTREAM_REPO = "bggRGjQaUbCoE/PiliPlus"
-
-SOURCE_NAME = "PiliPlus"
-SOURCE_IDENTIFIER = "io.github.piliplus.altstore.source"
-
-BUNDLE_ID = "com.example.piliplus"
-DEVELOPER_NAME = "bggRGjQaUbCoE"
-MIN_OS_VERSION = "15.0"  # MinimumOSVersion inside the released ipa
-TINT_COLOR = "#5CB67B"  # dominant color of the app logo (assets/images/logo/logo.png)
-CATEGORY = "entertainment"
-
-WEBSITE = f"https://github.com/{UPSTREAM_REPO}"
-ICON_URL = f"https://raw.githubusercontent.com/{UPSTREAM_REPO}/main/assets/images/logo/logo.png"
-SCREENSHOT_BASE = f"https://raw.githubusercontent.com/{UPSTREAM_REPO}/main/assets/screenshots/"
-
-SOURCE_SUBTITLE = "Unofficial PiliPlus AltStore source"
-SUBTITLE = "使用 Flutter 开发的 BiliBili 第三方客户端"
-DESCRIPTION = (
-    "PiliPlus 是使用 Flutter 开发的 BiliBili 第三方客户端，基于 pilipala 与 PiliPalaX，"
-    "支持推荐/热门/分区、番剧、直播、动态、搜索、缓存离线等完整功能。"
-    "本源收录上游发布的未签名 iOS 构建（ipa），可通过 AltStore / SideStore 使用 Apple ID 自签安装。"
-)
-
-SCREENSHOTS = [
-    "home.png",
-    "bangumi.png",
-    "bangumi_detail.png",
-    "dynamic.png",
-    "search.png",
-    "set.png",
-]
-
-# Privacy usage descriptions, copied from the app's ios/Runner/Info.plist
-PRIVACY = {
-    "NSPhotoLibraryUsageDescription": "请允许APP保存图片到相册",
-    "NSCameraUsageDescription": "App需要您的同意，才能访问相册",
-    "NSAppleMusicUsageDescription": "App需要您的同意，才能访问媒体资料库",
-    "NSLocalNetworkUsageDescription": "需要访问本地网络以发现和连接 DLNA 投屏设备",
-}
-
-# Match the unsigned iOS build, e.g. "PiliPlus_ios_2.2.0+5598.ipa"
-IPA_ASSET_RE = re.compile(r"^PiliPlus[_-]ios.*\.ipa$", re.IGNORECASE)
-# Extract the build number from the ipa filename: "...+5598.ipa" -> "5598"
-BUILD_RE = re.compile(r"\+(\d+)\.ipa$", re.IGNORECASE)
+ROOT = Path(__file__).resolve().parent.parent
+API = "https://api.github.com"
+USER_AGENT = "pyramid-altstore-self"
+TIMEOUT = 60
+DEFAULT_MIN_OS = "15.0"
+DEFAULT_TINT = "#8E8E93"
 
 
-def fetch_releases() -> list:
-    """Fetch up to 100 recent releases from the upstream GitHub API."""
-    url = f"https://api.github.com/repos/{UPSTREAM_REPO}/releases?per_page=100"
+# --------------------------------------------------------------------------- #
+# Helpers
+# --------------------------------------------------------------------------- #
+
+def log(message):
+    print(message, flush=True)
+
+
+def load_json(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def http_get_json(url, token=None):
     req = urllib.request.Request(
         url,
         headers={
-            "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "PiliPlus-AltStore-Source",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": USER_AGENT,
         },
     )
-    token = os.environ.get("GITHUB_TOKEN")
     if token:
-        req.add_header("Authorization", f"Bearer {token}")
-    with urllib.request.urlopen(req, timeout=60) as resp:
+        req.add_header("Authorization", "Bearer " + token)
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def release_to_version(release: dict) -> dict | None:
-    """Map one GitHub release to an AltStore version entry, or None if unusable."""
-    if release.get("draft") or release.get("prerelease"):
-        return None
-    asset = next(
-        (a for a in release.get("assets", []) if IPA_ASSET_RE.match(a.get("name", ""))),
-        None,
-    )
-    if asset is None:
-        print(f"  skip {release.get('tag_name')}: no iOS ipa asset")
-        return None
+def fetch_releases(repo, token, pages=2):
+    """Return releases newest-first, at most `pages` x 100 of them."""
+    releases = []
+    for page in range(1, pages + 1):
+        batch = http_get_json(
+            f"{API}/repos/{repo}/releases?per_page=100&page={page}", token
+        )
+        if not batch:
+            break
+        releases.extend(batch)
+        if len(batch) < 100:
+            break
+    return releases
 
-    version = release.get("tag_name", "")
-    body = (release.get("body") or "").strip() or f"PiliPlus {version}"
+
+def find_asset(release, name):
+    for asset in release.get("assets", []):
+        if asset.get("name") == name:
+            return asset
+    return None
+
+
+def pick_asset(release, pattern):
+    """First release asset whose name matches the app's asset regex."""
+    rx = re.compile(pattern, re.IGNORECASE)
+    for asset in release.get("assets", []):
+        if rx.search(asset.get("name", "")):
+            return asset
+    return None
+
+
+def release_notes(app, release, asset):
+    """Changelog text: a small JSON asset when the app publishes one, else the body."""
+    spec = app.get("notesFromAsset")
+    if spec:
+        extra = find_asset(release, spec.get("name", ""))
+        if extra is not None:
+            try:
+                # Release assets redirect to a CDN; urllib follows that for us.
+                data = http_get_json(extra["browser_download_url"])
+            except Exception as exc:  # network hiccup must not lose the release
+                log(f"    notes asset unavailable ({type(exc).__name__}); using release body")
+            else:
+                locale = spec.get("locale")
+                localized = data.get("notesByLocale") or {}
+                if locale and isinstance(localized.get(locale), str):
+                    text = localized[locale].strip()
+                    if text:
+                        return text
+                text = (data.get("notes") or "").strip()
+                if text:
+                    return text
+    return (release.get("body") or "").strip()
+
+
+# --------------------------------------------------------------------------- #
+# Building the source
+# --------------------------------------------------------------------------- #
+
+def version_entry(app, release, asset):
+    tag = release.get("tag_name", "")
+    prefix = app.get("versionStripPrefix") or ""
+    version = tag[len(prefix):] if prefix and tag.startswith(prefix) else tag
 
     entry = {
         "version": version,
         "date": release.get("published_at", ""),
-        "localizedDescription": body,
+        "localizedDescription": release_notes(app, release, asset)
+        or f"{app['name']} {version}",
         "downloadURL": asset["browser_download_url"],
         "size": asset.get("size", 0),
-        "minOSVersion": MIN_OS_VERSION,
+        "minOSVersion": app.get("minOSVersion", DEFAULT_MIN_OS),
+        "_tag": tag,
     }
-    build = BUILD_RE.search(asset["name"])
-    if build:
-        entry["buildVersion"] = build.group(1)
+
+    # buildVersion must match CFBundleVersion inside the ipa; only set it when the
+    # asset name actually carries it (PiliPlus does, DSH Go leaves it at 1).
+    pattern = app.get("buildVersionRegex")
+    if pattern:
+        match = re.search(pattern, asset.get("name", ""), re.IGNORECASE)
+        if match:
+            entry["buildVersion"] = match.group(1)
     return entry
 
 
-def build_source(pairs: list) -> tuple:
-    """Build the full AltStore source dict from (release, version) pairs.
+def collect_versions(app, releases):
+    """Map upstream releases to AltStore version entries, newest first."""
+    seen = set()
+    versions = []
+    for release in releases:
+        if release.get("draft"):
+            continue
+        if release.get("prerelease") and not app.get("includePrerelease"):
+            continue
+        asset = pick_asset(release, app["assetPattern"])
+        if asset is None:
+            continue
+        entry = version_entry(app, release, asset)
+        key = (entry["version"], entry["downloadURL"])
+        if key in seen:
+            continue
+        seen.add(key)
+        versions.append(entry)
 
-    Returns (source, latest_version_entry, latest_release).
-    """
-    versions = [v for _, v in pairs]
-    # GitHub returns newest-first by creation; re-sort by publish date to be safe
     versions.sort(key=lambda v: v["date"], reverse=True)
+    cap = app.get("maxVersions")
+    if cap:
+        versions = versions[: int(cap)]
+    return versions
+
+
+def app_entry(app, versions):
     latest = versions[0]
-    latest_release = pairs[0][0]
-
-    news = [
-        {
-            "appID": BUNDLE_ID,
-            "caption": f"PiliPlus {latest['version']} 已发布",
-            "date": latest["date"],
-            "identifier": f"release-{latest['version']}",
-            "notify": True,
-            "tintColor": TINT_COLOR,
-            "title": f"PiliPlus {latest['version']}",
-            "url": f"{WEBSITE}/releases/tag/{latest['version']}",
-        }
-    ]
-
-    app = {
-        "beta": False,
-        "name": SOURCE_NAME,
-        "bundleIdentifier": BUNDLE_ID,
-        "developerName": DEVELOPER_NAME,
-        "subtitle": SUBTITLE,
-        "localizedDescription": DESCRIPTION,
+    entry = {
+        "beta": bool(app.get("beta", False)),
+        "name": app["name"],
+        "bundleIdentifier": app["bundleIdentifier"],
+        "developerName": app["developerName"],
+        "subtitle": app["subtitle"],
+        "localizedDescription": app["localizedDescription"],
         "version": latest["version"],
         "versionDate": latest["date"],
         "versionDescription": latest["localizedDescription"],
         "downloadURL": latest["downloadURL"],
         "size": latest["size"],
-        "iconURL": ICON_URL,
-        "tintColor": TINT_COLOR,
-        "category": CATEGORY,
-        "screenshots": {
-            "iphone": [SCREENSHOT_BASE + name for name in SCREENSHOTS],
-            "ipad": [],
-        },
-        "appPermissions": {"entitlements": [], "privacy": PRIVACY},
-        "versions": versions,
+        "iconURL": app["iconURL"],
+        "tintColor": app.get("tintColor", DEFAULT_TINT),
+        "category": app.get("category", "utilities"),
+    }
+    shots = app.get("screenshots")
+    if shots:
+        entry["screenshots"] = {
+            "iphone": shots.get("iphone", []),
+            "ipad": shots.get("ipad", []),
+        }
+    entry["appPermissions"] = {
+        "entitlements": app.get("entitlements", []),
+        "privacy": app.get("privacy", {}),
+    }
+    entry["versions"] = versions
+    return entry
+
+
+def news_entry(app, versions):
+    latest = versions[0]
+    version = latest["version"]
+    return {
+        "appID": app["bundleIdentifier"],
+        "caption": f"{app['name']} {version} 已发布",
+        "date": latest["date"],
+        "identifier": f"{app['id']}-{version}",
+        "notify": True,
+        "tintColor": app.get("tintColor", DEFAULT_TINT),
+        "title": f"{app['name']} {version}",
+        "url": f"https://github.com/{app['repo']}/releases/tag/{latest['_tag']}",
     }
 
-    return {
-        "name": SOURCE_NAME,
-        "identifier": SOURCE_IDENTIFIER,
-        "website": WEBSITE,
-        "subtitle": SOURCE_SUBTITLE,
-        "description": DESCRIPTION,
-        "iconURL": ICON_URL,
-        "tintColor": TINT_COLOR,
-        "featuredApps": [BUNDLE_ID],
-        "apps": [app],
-        "news": news,
-    }, latest, latest_release
+
+def strip_internal(versions):
+    for entry in versions:
+        entry.pop("_tag", None)
 
 
-def write_outputs(root: Path, source: dict) -> None:
-    out_dir = root / "generated"
-    out_dir.mkdir(exist_ok=True)
+def write_outputs(source):
     payload = json.dumps(source, ensure_ascii=False, indent=2) + "\n"
-    (out_dir / "apps.json").write_text(payload, encoding="utf-8")
-    (root / "alt_store.json").write_text(payload, encoding="utf-8")
+    generated = ROOT / "generated"
+    generated.mkdir(exist_ok=True)
+    (generated / "apps.json").write_text(payload, encoding="utf-8")
+    (ROOT / "alt_store.json").write_text(payload, encoding="utf-8")
 
 
-def main() -> int:
-    root = Path(__file__).resolve().parent.parent
+def load_apps():
+    configs = []
+    for path in sorted((ROOT / "apps").glob("*.json")):
+        app = load_json(path)
+        app["id"] = app.get("id") or path.stem
+        configs.append(app)
+    enabled = [a for a in configs if a.get("enabled", True)]
+    enabled.sort(key=lambda a: (a.get("order", 1000), a["id"]))
+    return enabled
 
-    releases = fetch_releases()
-    print(f"fetched {len(releases)} releases from {UPSTREAM_REPO}")
 
-    pairs = []
-    for release in releases:
-        version = release_to_version(release)
-        if version is not None:
-            pairs.append((release, version))
-
-    if not pairs:
-        # Refuse to clobber an existing good source with an empty one.
-        existing = root / "generated" / "apps.json"
-        if existing.is_file():
-            old = json.loads(existing.read_text(encoding="utf-8"))
-            if old.get("apps") and old["apps"][0].get("versions"):
-                print("ERROR: no usable releases found, keeping existing source", file=sys.stderr)
-                return 1
-        print("ERROR: no usable releases found upstream", file=sys.stderr)
+def main():
+    token = os.environ.get("GITHUB_TOKEN")
+    source_cfg = load_json(ROOT / "source.json")
+    apps = load_apps()
+    if not apps:
+        log("ERROR: no enabled app configs in apps/")
         return 1
 
-    source, latest, latest_release = build_source(pairs)
-    write_outputs(root, source)
+    built = []
+    missing = []
+    for app in apps:
+        log(f"[{app['id']}] {app['repo']}")
+        try:
+            releases = fetch_releases(
+                app["repo"], token, pages=int(app.get("maxPages", 2))
+            )
+        except Exception as exc:
+            log(f"  ERROR: cannot fetch releases ({type(exc).__name__}: {exc})")
+            missing.append(app["id"])
+            continue
 
-    print(f"generated source with {len(source['apps'][0]['versions'])} versions")
-    print(f"latest: {latest['version']} ({latest['date']})")
-    print(f"download: {latest['downloadURL']}")
+        versions = collect_versions(app, releases)
+        if not versions:
+            log(f"  ERROR: no iOS build found in {len(releases)} releases")
+            missing.append(app["id"])
+            continue
+        log(f"  {len(releases)} releases -> {len(versions)} iOS builds, latest {versions[0]['version']}")
+        built.append((app, versions))
 
-    # Expose the latest tag to GitHub Actions for the commit message.
+    # Never publish a source with an app silently dropped: a transient API error
+    # or a moved asset should fail the run, not delete a section of the source.
+    if missing:
+        log(f"ERROR: no usable release for: {', '.join(missing)}; keeping previous files")
+        return 1
+
+    app_entries = []
+    news = []
+    summary = []
+    for app, versions in built:
+        news.append(news_entry(app, versions))
+        strip_internal(versions)
+        app_entries.append(app_entry(app, versions))
+        summary.append(f"{app['name']} {versions[0]['version']}")
+
+    featured = [
+        entry["bundleIdentifier"]
+        for (app, _), entry in zip(built, app_entries)
+        if app.get("featured", True)
+    ]
+
+    source = {
+        "name": source_cfg["name"],
+        "identifier": source_cfg["identifier"],
+        "website": source_cfg["website"],
+        "subtitle": source_cfg["subtitle"],
+        "description": source_cfg["description"],
+        "iconURL": source_cfg["iconURL"],
+        "tintColor": source_cfg.get("tintColor", DEFAULT_TINT),
+        "featuredApps": featured,
+        "apps": app_entries,
+        "news": [n for n in news if _news_enabled(built, n["appID"])],
+    }
+
+    write_outputs(source)
+
+    total = sum(len(a["versions"]) for a in app_entries)
+    log(f"generated source with {len(app_entries)} apps / {total} versions")
+    for line in summary:
+        log(f"  {line}")
+
     gh_output = os.environ.get("GITHUB_OUTPUT")
     if gh_output:
-        with open(gh_output, "a", encoding="utf-8") as f:
-            f.write(f"latest_tag={latest_release.get('tag_name', latest['version'])}\n")
+        with open(gh_output, "a", encoding="utf-8") as handle:
+            handle.write("summary=" + "; ".join(summary) + "\n")
     return 0
+
+
+def _news_enabled(built, bundle_id):
+    for app, _ in built:
+        if app["bundleIdentifier"] == bundle_id:
+            return bool(app.get("news", True))
+    return False
 
 
 if __name__ == "__main__":
