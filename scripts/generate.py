@@ -226,8 +226,11 @@ def write_outputs(source):
     payload = json.dumps(source, ensure_ascii=False, indent=2) + "\n"
     generated = ROOT / "generated"
     generated.mkdir(exist_ok=True)
-    (generated / "apps.json").write_text(payload, encoding="utf-8")
-    (ROOT / "alt_store.json").write_text(payload, encoding="utf-8")
+    # newline="\n" keeps a Windows checkout byte-identical to the Linux CI run,
+    # otherwise every local run would rewrite the file as CRLF and churn the diff.
+    for path in (generated / "apps.json", ROOT / "alt_store.json"):
+        with open(path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(payload)
 
 
 def load_apps():
